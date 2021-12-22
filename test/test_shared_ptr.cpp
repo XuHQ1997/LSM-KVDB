@@ -11,10 +11,16 @@ struct Obj : public lsm::Countable {
 
 int Obj::num_alive = 0;
 using ObjPtr = lsm::SharedPtr<Obj>;
+using CObjPtr = lsm::SharedPtr<const Obj>;
 
 TEST(SharedPtrTest, Basic) {
     {
         ObjPtr ptr(new Obj);
+        ASSERT_EQ(Obj::num_alive, 1);
+    }
+    {
+        const Obj* cobj = new Obj;
+        CObjPtr cptr(cobj);
         ASSERT_EQ(Obj::num_alive, 1);
     }
     ASSERT_EQ(Obj::num_alive, 0);

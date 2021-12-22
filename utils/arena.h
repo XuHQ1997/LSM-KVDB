@@ -41,5 +41,35 @@ inline char* Arena::Allocate(size_t bytes) {
     return AllocateFallback(bytes);
 }
 
+// wrapper for stl containers
+template<typename T>
+class ArenaAllocator {
+public:
+    using value_type = T;
+    using pointer = T*;
+    using const_pointer = const T*;
+
+    ArenaAllocator(Arena* arena) : arena_(arena) {}
+    ~ArenaAllocator() = default;
+    ArenaAllocator(const ArenaAllocator&) = default;
+
+    // for compatibility with weird implementation of std::map 
+    template<typename U>
+    ArenaAllocator(const ArenaAllocator<U>& other) 
+        : arena_(other.arena_) {}
+
+    pointer allocate(size_t n) {
+        return reinterpret_cast<pointer>(
+            arena_->Allocate(sizeof(T) * n));
+    }
+
+    void deallocate(T* ptr, size_t n) {}
+
+    template<typename U>
+    friend class ArenaAllocator;
+private:
+    Arena* arena_;
+};
+
 }  // namespace lsm
 #endif

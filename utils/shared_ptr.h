@@ -13,20 +13,16 @@ template<typename T>
 class SharedPtr {
 public:
     SharedPtr(void) : obj_(nullptr) {}
-    SharedPtr(T* obj) {
-        // convert T* or const T* to Countable*
-        obj_ = const_cast<Countable*>(
-            static_cast<const Countable*>(obj));
-
+    SharedPtr(T* obj) : obj_(obj) {
         if (obj_ != nullptr) {
-            ref(); 
+            ref();
         }
     }
+    
     SharedPtr(const SharedPtr& other) 
-        : SharedPtr(static_cast<T*>(other.obj_)) {}
-    SharedPtr(SharedPtr&& other) 
+        : SharedPtr(other.obj_) {}
+    SharedPtr(SharedPtr&& other)
         : obj_(other.release()) {}
-
     ~SharedPtr() { 
         if (obj_ != nullptr) { 
             unref();
@@ -39,14 +35,14 @@ public:
         return *this;
     }
 
-    T* get(void) { return static_cast<T*>(obj_); }
+    T* get(void) { return obj_; }
     T* release(void) {
-        Countable* obj = obj_;
+        T* obj = obj_;
         obj_ = nullptr;
         return obj;
     }
 
-    T* operator->(void) { return static_cast<T*>(obj_); }
+    T* operator->(void) { return obj_; }
     operator bool() const { return obj_ != nullptr; }
     void swap(SharedPtr& rhs) { std::swap(this->obj_, rhs.obj_); }
 
@@ -62,7 +58,7 @@ private:
     }
 
 private:
-    Countable* obj_;
+    T* obj_;
 };
 
 }  // namespace lsm
