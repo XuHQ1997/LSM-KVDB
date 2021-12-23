@@ -1,8 +1,17 @@
-all: bin/test/test_shared_ptr bin/test/test_arena
+bin/test/test_memtable.o: utils/arena.cpp test/test_memtable.cpp lsm/memtable.cpp lsm/memtable.h utils/shared_ptr.h utils/arena.h lsm/status.h
+	g++ --std=c++11 utils/arena.cpp test/test_memtable.cpp lsm/memtable.cpp -I. -Ithird_party/googletest/googletest/include -Lthird_party/googletest/lib -lgtest -lpthread -o bin/test/test_memtable.o
+
+bin/test/test_arena.o: utils/arena.cpp test/test_arena.cpp utils/arena.h
+	g++ --std=c++11 utils/arena.cpp test/test_arena.cpp -I. -Ithird_party/googletest/googletest/include -Lthird_party/googletest/lib -lgtest -lpthread -o bin/test/test_arena.o
+
+bin/test/test_shared_ptr.o: test/test_shared_ptr.cpp utils/shared_ptr.h
+	g++ --std=c++11 test/test_shared_ptr.cpp -I. -Ithird_party/googletest/googletest/include -Lthird_party/googletest/lib -lgtest -lpthread -o bin/test/test_shared_ptr.o
+
+.PHONEY: all
+all: bin/test/test_memtable.o bin/test/test_arena.o bin/test/test_shared_ptr.o
 	@echo make success
 
-bin/test/test_shared_ptr: test/test_shared_ptr.cpp
-	g++ test/test_shared_ptr.cpp -I . -I third_party/googletest/googletest/include -L third_party/googletest/lib -lgtest -lpthread  -o bin/test/test_shared_ptr
+.PHONEY: clean
+clean:
+	rm bin/test/*
 
-bin/test/test_arena: test/test_arena.cpp
-	g++ test/test_arena.cpp utils/arena.cpp -I . -I third_party/googletest/googletest/include -L third_party/googletest/lib -lgtest -lpthread -o bin/test/test_arena
