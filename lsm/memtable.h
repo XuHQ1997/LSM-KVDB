@@ -7,6 +7,7 @@
 #include "status.h"
 #include "utils/shared_ptr.h"
 #include "utils/arena.h"
+#include "utils/slice.h"
 
 namespace lsm {
 
@@ -17,8 +18,8 @@ public:
         , kvdata_(ArenaAllocator<ValueType>(&arena_)) {}
     ~MemTable() = default;
 
-    Status Get(const std::string& key, std::string& value);
-    Status Add(const std::string& key, const std::string& value);
+    Status Get(const Slice& key, std::string& value);
+    Status Put(const Slice& key, const Slice& value);
     size_t MemoryUsage(void) const { return arena_.MemoryUsage(); }
 private:
     using ValueType = std::map<std::string, std::string>::allocator_type::value_type;
