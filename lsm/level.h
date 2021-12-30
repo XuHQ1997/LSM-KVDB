@@ -12,6 +12,7 @@ public:
     Level(int level);
     ~Level();
 
+    size_t size(void);
     Status Get(const Slice& key, std::string& value);
     Status Put(const Slice& key, const Slice& value);
 };

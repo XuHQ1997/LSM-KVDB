@@ -4,7 +4,17 @@
 namespace lsm {
 
 LSMTree::LSMTree(std::string data_dir)
-    : data_dir_(std::move(data_dir)) {}
+        : data_dir_(std::move(data_dir))
+        , stop_(false)
+        , compaction_(this) {
+    compaction_.Start();
+}
+
+LSMTree::~LSMTree() {
+    stop_ = true;
+    compaction_.Notify();
+    compaction_.BlockDie();
+}
 
 Status LSMTree::Get(const Slice& key, std::string& value) {
     Status status;
@@ -43,19 +53,20 @@ Status LSMTree::Put(const Slice& key, const Slice& value) {
     return status;
 }
 
+// TODO: need protected by compaction_mu_
 Status LSMTree::MakeRoomForWrite() {
     Status status = Status::OK();
-    while (true) {
-        if (mem_->MemoryUsage() < kMemTableMemoryLimit) {
-            break;
-        } else if (!imm_) {
-            imm_.swap(mem_);
-            mem_ = MemTablePtr(new MemTable());
-            // TODO: Need notify compaction thread
-            break;
-        } else {
-            // TODO: delay write if necessary
-        }
+    if (levels_[0]->size() >= kDelayWriteL0) {
+        // nearly hit the hard limit
+        compaction_.DelayWrite();
+    } else if (mem_->MemoryUsage() < kMemTableMemoryLimit) {
+        // everything is fine
+    } else if (imm_) {
+        compaction_.BlockWrite();
+    } else {
+        imm_.swap(mem_);
+        mem_ = MemTablePtr(new MemTable);
+        compaction_.Notify();
     }
     return status;
 }
