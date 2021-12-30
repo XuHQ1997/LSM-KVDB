@@ -6,7 +6,7 @@ namespace lsm {
 
 void Compaction::BackgroundCompaction(void) {
     while (true) {
-        if (lsmt_->stop_) {
+        if (lsmt_->stop_.load(std::memory_order_relaxed)) {
             // main thread stop
             break;
         } else if (!worker_status_.ok()) {
@@ -15,7 +15,7 @@ void Compaction::BackgroundCompaction(void) {
         } else if (lsmt_->levels_[0]->size() >= kMaxNumFilesL0) {
             // hit the hard limit of L0 files
             MinorCompactionL0();
-        }else if (need_major_compaction_) {
+        }else if (need_major_compaction_.load(std::memory_order_acquire)) {
             // compaction imm
             MajorCompaction();
             Notify();
@@ -25,9 +25,8 @@ void Compaction::BackgroundCompaction(void) {
             PickCompactionLevel();
 
             auto is_busy = [this]() {
-                return lsmt_->stop_ 
-                    || need_major_compaction_
-                    || need_minor_compaction_;
+                return lsmt_->stop_  || need_minor_compaction_
+                    || need_major_compaction_.load(std::memory_order_release);
             };
             if (!is_busy()) {
                 std::unique_lock<std::mutex> lck(mu_);

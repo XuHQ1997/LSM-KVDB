@@ -2,6 +2,7 @@
 #define LSM_COMPACTION_H
 
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include "status.h"
 
@@ -24,6 +25,10 @@ public:
         worker.detach();
     }
     
+    std::unique_lock<std::mutex> GetLock(void) {
+        return std::unique_lock<std::mutex>(mu_);
+    }
+
     // Awake the other thread.
     void Notify(void) { 
         cv_.notify_one(); 
@@ -46,6 +51,8 @@ public:
         std::this_thread::sleep_for(
             std::chrono::microseconds(kDelayMicroSeconds));
     }
+
+    friend class LSMTree;
 private:
     // Worker entry function.
     void BackgroundCompaction(void);
@@ -70,7 +77,7 @@ private:
 
     Status worker_status_;
     bool dead_;
-    bool need_major_compaction_;
+    std::atomic_bool need_major_compaction_;
     bool need_minor_compaction_;
 };
 }  // namespace lsm

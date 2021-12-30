@@ -2,6 +2,7 @@
 #define LSM_LEVEL_H
 
 #include <string>
+#include <vector>
 #include "utils/shared_ptr.h"
 #include "status.h"
 
@@ -12,9 +13,12 @@ public:
     Level(int level);
     ~Level();
 
+    const std::vector<SSTablePtr>& tables(void);
     size_t size(void);
+
     Status Get(const Slice& key, std::string& value);
-    Status Put(const Slice& key, const Slice& value);
+private:
+    std::vector<SSTablePtr> tables_;
 };
 
 using LevelPtr = SharedPtr<Level>;
